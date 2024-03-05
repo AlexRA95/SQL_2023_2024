@@ -3,13 +3,13 @@ CREATE DATABASE instituto CHARACTER SET utf8mb4;
 USE instituto;
 
 CREATE TABLE alumno (
-id INT AUTO_INCREMENT PRIMARY KEY,
-nombre VARCHAR(100) NOT NULL,
-apellido1 VARCHAR(100) NOT NULL,
-apellido2 VARCHAR(100),
-fecha_nacimiento DATE NOT NULL,
-es_repetidor ENUM('sí', 'no') NOT NULL,
-teléfono VARCHAR(9)
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido1 VARCHAR(100) NOT NULL,
+    apellido2 VARCHAR(100),
+    fecha_nacimiento DATE NOT NULL,
+    es_repetidor ENUM('sí', 'no') NOT NULL,
+    teléfono VARCHAR(9)
 );
 
 INSERT INTO alumno VALUES(1, 'María', 'Sánchez', 'Pérez', '1990-12-01', 'no', NULL);
@@ -81,3 +81,43 @@ WHERE fecha_nacimiento BETWEEN '1998-01-01' AND '1998-12-31';
 SELECT *
 FROM instituto.alumno
 WHERE fecha_nacimiento NOT BETWEEN '1998-01-01' AND '1998-12-31';
+
+SELECT CONCAT_WS(' ',nombre, apellido1, apellido2) AS 'Nombre',
+ REVERSE(CONCAT_WS(' ', apellido2, apellido1,nombre)) AS 'Nombre inverso' 
+FROM instituto.alumno;
+
+SELECT UPPER(CONCAT_WS(' ',nombre, apellido1, apellido2))  AS 'Nombre en mayuscula',
+ LOWER(REVERSE(CONCAT_WS(' ', apellido2, apellido1,nombre)))  AS 'Nombre inverso en minuscula' 
+FROM instituto.alumno;
+
+SELECT CONCAT_WS(' ',nombre, apellido1, apellido2) AS 'Nombre',
+ CHAR_LENGTH(CONCAT_WS(' ',nombre, apellido1, apellido2)) AS 'nCaracteres',
+ LENGTH(CONCAT_WS(' ',nombre, apellido1, apellido2)) AS 'nBits'
+FROM instituto.alumno;
+
+SELECT 
+    CONCAT_WS(' ', nombre, apellido1, apellido2) AS 'Nombre',
+    LOWER(CONCAT(nombre,'.',apellido1,'@iesalbarregas.org')) AS 'Correo electronico',
+    IFNULL(CONCAT(REVERSE(apellido2),YEAR(fecha_nacimiento)),YEAR(fecha_nacimiento)) AS 'Contraseña correo'
+FROM
+    instituto.alumno;
+    
+SELECT fecha_nacimiento, DAY(fecha_nacimiento) AS 'DÍA', MONTH(fecha_nacimiento) AS 'MES', YEAR(fecha_nacimiento) AS 'AÑO'
+FROM alumno;
+
+SELECT fecha_nacimiento, SUBSTR(fecha_nacimiento FROM 9 FOR 2 ) AS 'DÍA', SUBSTR(fecha_nacimiento FROM 6 FOR 2) AS 'MES', SUBSTR(fecha_nacimiento FROM 1 FOR 4) AS 'AÑO'
+FROM alumno;
+
+SET lc_time_names='es_ES';
+
+SELECT fecha_nacimiento, DAYNAME(fecha_nacimiento) AS 'Dia', MONTHNAME(fecha_nacimiento)
+FROM alumno;
+
+SELECT fecha_nacimiento, DATE_FORMAT(fecha_nacimiento, '%e/%b/%y') AS 'Fecha_españa'
+FROM alumno;
+
+SELECT fecha_nacimiento, DATEDIFF(CURDATE() ,fecha_nacimiento) AS 'Días diferencia'
+FROM alumno;
+
+SELECT fecha_nacimiento, FLOOR(DATEDIFF(CURDATE() ,fecha_nacimiento)/365.25) AS 'Edad'
+FROM alumno;

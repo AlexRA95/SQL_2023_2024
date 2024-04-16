@@ -12,7 +12,7 @@ CREATE TABLE departamento (
 CREATE TABLE empleado (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   nif VARCHAR(9) NOT NULL UNIQUE,
-  nombre VARCHAR(100) NOT NULL,
+  nombre VARCHAR(100) NOT NULL UNIQUE,
   apellido1 VARCHAR(100) NOT NULL,
   apellido2 VARCHAR(100),
   id_departamento INT UNSIGNED,
@@ -41,208 +41,55 @@ INSERT INTO empleado VALUES(11, '67389283A', 'Marta','Herrera', 'Gil', 1);
 INSERT INTO empleado VALUES(12, '41234836R', 'Irene','Salas', 'Flores', NULL);
 INSERT INTO empleado VALUES(13, '82635162B', 'Juan Antonio','Sáez', 'Guerrero', NULL);
 
-/*EJ 1*/
-SELECT DISTINCT apellido1
-FROM empleado;
+-- Ejercicio Empleados 1
+ALTER TABLE departamento MODIFY COLUMN gastos DOUBLE UNSIGNED NOT NULL DEFAULT (0);
+-- Si insertamos directamente las 3 columnas que nos pide el ejercicio, aparece error porque el campo gastos no puede estar vacío pero no tiene un valor DEFAULT asignado. 
+-- ALTER TABLE para asignarlo o indicamos en la instrucción INSERT el valor gastos.
+INSERT INTO departamento (id, nombre, presupuesto) VALUES (8, 'Ventas', 200000);
+SELECT * FROM departamento;
 
-/*EJ 2*/
-SELECT DISTINCT id_departamento
+-- Ejercicio Empleados 2
+INSERT INTO departamento (nombre, presupuesto) VALUES ('Marketing', 180000);
+
+-- Ejercicio Empleados 3
+INSERT INTO departamento (id, nombre, presupuesto, gastos) VALUES (10, 'Logística', 250000, 15000);
+
+-- Ejercicio Empleados 4
+INSERT INTO empleado (id, nif, nombre, apellido1, apellido2, id_departamento) VALUES (14, '98027364T', 'Laura', 'González', 'Rodríguez', 8);
+SELECT * FROM empleado;
+
+-- Ejercicio Empleados 5
+INSERT INTO empleado (nif, nombre, apellido1, apellido2, id_departamento) VALUES ('17382917S', 'Carlos', 'Martínez', 'Gómez', 9);
+
+-- Ejercicio Empleados 6
+CREATE TABLE departamento_backup LIKE departamento;
+SELECT * FROM departamento_backup;
+INSERT INTO departamento_backup SELECT * FROM departamento;
+
+-- Ejercicio Empleados 7
+CREATE TABLE sistemas (nif VARCHAR(9) NOT NULL UNIQUE, nombre VARCHAR(100) NOT NULL UNIQUE, apellido1 VARCHAR(100) NOT NULL, apellido2 VARCHAR(100));
+INSERT INTO sistemas 
+SELECT nif, nombre, apellido1, apellido2
 FROM empleado
-WHERE id_departamento IS NOT NULL;
+WHERE id_departamento =2;
+SELECT * FROM sistemas;
 
-/*EJ 3*/
-SELECT LOWER(CONCAT_WS(' ',nombre, apellido1, apellido2)) AS 'Nombre completo'
-FROM empleado;
+-- Ejercicio Empleados 8
+INSERT IGNORE INTO empleado
+VALUES 	
+(NOT NULL, '28457963P', 'Mónica', 'Jiménez', 'Martín', 9),
+(NOT NULL, '85463215L', 'Ramón', 'Solís', 'Pérez', 7),
+(NOT NULL, '71651431Z', 'Pepe', 'Ruiz', 'Santana', 3);
+SELECT * FROM empleado;
 
-/*EJ 4*/
-SELECT id_departamento, SUBSTR(nif FROM 1 FOR 8) AS 'Numeros NIF', SUBSTR(nif FROM 9 FOR 1) AS 'Letras'
-FROM empleado;
-
-/*EJ 5*/
-SELECT nombre, presupuesto-gastos AS 'Presupuesto actual'
-FROM departamento;
-
-/*EJ 6*/
-SELECT nombre, presupuesto-gastos AS 'Presupuesto actual'
-FROM departamento
-ORDER BY presupuesto-gastos ASC;
-
-/*EJ 7*/
-SELECT nombre, apellido1, apellido2
-FROM empleado
-ORDER BY apellido1, apellido2, nombre;
-
-/*EJ 8*/
-SELECT nombre, presupuesto
-FROM departamento
-ORDER BY presupuesto DESC
-LIMIT 3 OFFSET 1;
-
-/*EJ 9*/
-SELECT nombre, presupuesto
-FROM departamento
-ORDER BY presupuesto
-LIMIT 3 OFFSET 1;
-
-/*EJ 10*/
-SELECT nombre, presupuesto
-FROM departamento
-ORDER BY presupuesto
-LIMIT 2 OFFSET 4;
-
-/*EJ 11*/
-SELECT *
-FROM empleado
-LIMIT 5 OFFSET 2;
-
-/*EJ 12*/
-SELECT nombre, presupuesto
-FROM departamento
-WHERE presupuesto>150000;
-
-/*EJ 13*/
-SELECT nombre, presupuesto
-FROM departamento
-WHERE presupuesto>200000 OR presupuesto<100000;
-
-SELECT nombre, presupuesto
-FROM departamento
-WHERE NOT presupuesto<200000 OR NOT presupuesto>100000;
-
-/*EJ 14*/
-SELECT nombre, presupuesto, gastos
-FROM departamento
-WHERE gastos>presupuesto;
-
-/*EJ 15*/
-SELECT *
-FROM empleado
-WHERE apellido2 IS NULL;
-
-/*EJ 16*/
-SELECT *
-FROM empleado
-WHERE apellido2 IS NOT NULL;
-
-/*EJ 17*/
-SELECT UPPER(CONCAT_WS(' ', nombre, apellido1, apellido2)) AS nombre_completo, nif, id_departamento
-FROM empleado
-WHERE apellido2 IN ('Diaz', 'Moreno', 'Gil') AND id_departamento=1
-ORDER BY nombre_completo;
-
-/*LEFT JOIN & RIGHT JOIN*/
-/*EJ 1*/
-SELECT em.*, de.*
-FROM empleado em
-LEFT JOIN departamento de
-	ON de.id=em.id_departamento;
-    
-/*EJ 2*/
-SELECT em.*, de.*
-FROM empleado em
-LEFT JOIN departamento de
-	ON de.id=em.id_departamento
-WHERE em.id_departamento IS NULL;
-
-/*EJ 3*/
-SELECT em.*, de.*
-FROM empleado em
-RIGHT JOIN departamento de
-	ON de.id=em.id_departamento
-WHERE em.id_departamento IS NULL;
-
-/*EJ 4*/
-SELECT *
-FROM empleado em
-LEFT JOIN departamento de
-	ON de.id=em.id_departamento
-UNION
-
-SELECT *
-FROM empleado em
-RIGHT JOIN departamento de
-	ON de.id=em.id_departamento
-    ORDER BY 8;
-    
-/*EJ 5*/
-SELECT *
-FROM empleado em
-LEFT JOIN departamento de
-	ON de.id=em.id_departamento
-WHERE em.id_departamento IS NULL
-UNION
-
-SELECT *
-FROM empleado em
-RIGHT JOIN departamento de
-	ON de.id=em.id_departamento
-WHERE em.id_departamento IS NULL ;
+-- Ejercicio Empleados 9
+DROP TABLE IF EXISTS publicidad;
+DROP TABLE IF EXISTS desarrollo;
+CREATE TABLE desarrollo (nif_empleado VARCHAR(9) NOT NULL UNIQUE, nombre_empleado VARCHAR(100) NOT NULL UNIQUE, ap1_empleado VARCHAR(100) NOT NULL, ap2_empleado VARCHAR(100), ppto_dep DOUBLE NOT NULL, gasto DOUBLE NOT NULL);
+INSERT INTO desarrollo (nif_empleado, nombre_empleado, ap1_empleado, ap2_empleado, ppto_dep, gasto)
+SELECT empleado.nif, empleado.nombre, empleado.apellido1, empleado.apellido2, departamento.presupuesto, departamento.gastos 
+FROM empleado, departamento
+WHERE empleado.id_departamento = 1;
+SELECT * FROM publicidad;
 
 
-/*GROUP BY*/
-/*EJ 1*/
-SELECT SUM(presupuesto)
-FROM departamento;
-
-/*EJ 2*/
-SELECT AVG(presupuesto)
-FROM departamento;
-
-/*EJ 3*/
-SELECT MIN(presupuesto)
-FROM departamento;
-
-/*EJ 4*/
-SELECT nombre, presupuesto
-FROM DEPARTAMENTO
-ORDER BY presupuesto
-LIMIT 1 OFFSET 1;
-
-/*EJ 5*/
-SELECT MAX(presupuesto)
-FROM departamento;
-
-/*EJ 6*/
-SELECT nombre, presupuesto
-FROM DEPARTAMENTO
-ORDER BY presupuesto DESC
-LIMIT 1 OFFSET 1;
-
-/*EJ 7*/
-SELECT COUNT(*)
-FROM empleado;
-
-/*EJ 8*/
-SELECT COUNT(apellido2)
-FROM empleado;
-
-/*EJ 9*/
-SELECT d.nombre, COUNT(e.id)
-FROM empleado e
-	RIGHT JOIN departamento d
-		ON e.id_departamento=d.id
-GROUP BY d.id;
-
-/*EJ 10*/
-SELECT d.nombre, COUNT(e.id)
-FROM empleado e
-	LEFT JOIN departamento d
-		ON e.id_departamento=d.id
-GROUP BY e.id_departamento
-	HAVING COUNT(e.id)>=2;
-    
-/*EJ 11*/
-SELECT d.nombre, COUNT(e.id)
-FROM empleado e
-	LEFT JOIN departamento d
-		ON e.id_departamento=d.id
-GROUP BY e.id_departamento;
-
-/*EJ 12*/
-SELECT d.nombre, COUNT(e.id)
-FROM empleado e
-	LEFT JOIN departamento d
-		ON e.id_departamento=d.id
-WHERE presupuesto>=200000
-GROUP BY e.id_departamento
-	HAVING COUNT(e.id)>=2;

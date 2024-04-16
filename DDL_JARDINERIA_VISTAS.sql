@@ -63,9 +63,10 @@ CREATE TABLE pedido (
   fecha_entrega date DEFAULT NULL,
   estado VARCHAR(15) NOT NULL,
   comentarios TEXT,
-  codigo_cliente INTEGER NOT NULL,
+  codigo_cliente INTEGER,
   PRIMARY KEY (codigo_pedido),
-  FOREIGN KEY (codigo_cliente) REFERENCES cliente (codigo_cliente)
+  FOREIGN KEY (codigo_cliente) REFERENCES cliente (codigo_cliente) 
+	ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 CREATE TABLE producto (
@@ -94,7 +95,7 @@ CREATE TABLE detalle_pedido (
 );
 
 CREATE TABLE pago (
-  codigo_cliente INTEGER NOT NULL,
+  codigo_cliente INTEGER ,
   forma_pago VARCHAR(40) NOT NULL,
   id_transaccion VARCHAR(50) NOT NULL,
   fecha_pago date NOT NULL,

@@ -41,16 +41,9 @@ FROM listado_pedidos_clientes
 GROUP BY nombre_completo;
 
 /*EJ 6*/
-SELECT nombre_completo, total_pedido
+SELECT nombre_completo, MIN(total_pedido), MAX(total_pedido)
 FROM listado_pedidos_clientes
-WHERE total_pedido=(
-	SELECT MAX(total_pedido)
-    FROM listado_pedidos_clientes
- ) 
-    OR total_pedido=(
-	SELECT MIN(total_pedido)
-    FROM listado_pedidos_clientes
-);
+GROUP BY nombre_completo;
 
 /*EJ 7*/
 RENAME TABLE listado_pagos TO listado_de_pagos;

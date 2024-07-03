@@ -1,121 +1,235 @@
-USE jardineria;
+DROP DATABASE IF EXISTS GESTIÓN_BANCARIA;
+CREATE DATABASE GESTIÓN_BANCARIA CHARACTER SET utf8mb4;
+USE GESTIÓN_BANCARIA;
 
-/*ej 1*/
-SELECT o.linea_direccion1, o.linea_direccion2
-FROM oficina o
-JOIN empleado em ON em.codigo_oficina=o.codigo_oficina
-JOIN cliente cl ON cl.codigo_empleado_rep_ventas=em.codigo_empleado
-WHERE cl.ciudad='Fuenlabrada';
+CREATE TABLE CLIENTE (
+IDCLIENTE INT AUTO_INCREMENT PRIMARY KEY,
+DNI VARCHAR (9) NOT NULL UNIQUE,
+APELLIDO1 VARCHAR (30) NOT NULL,
+APELLIDO2 VARCHAR (30),
+NOMBRE VARCHAR (30) NOT NULL,
+DOMICILIO VARCHAR (100),
+TELÉFONO VARCHAR (20) NOT NULL
+) AUTO_INCREMENT = 1001;
 
-/*ej 2*/
-SELECT distinct cl.nombre_cliente
-FROM cliente cl
-JOIN pedido pe ON pe.codigo_cliente=cl.codigo_cliente
-WHERE pe.fecha_esperada<pe.fecha_entrega;
+CREATE TABLE CUENTA (
+IDCLIENTE INT,
+IDCUENTA VARCHAR(5) PRIMARY KEY,
+SALDO DECIMAL (15,2),
+MONEDA VARCHAR (20),
+FOREIGN KEY(IDCLIENTE) REFERENCES CLIENTE (IDCLIENTE)
+ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+
+/*EJ 1*/
+INSERT INTO cliente(dni,apellido1,apellido2,nombre,domicilio,TELÉFONO)values
+	('78456321L', 'Martín' ,'Sancho', 'Vera' ,'Calle Ramón y Cajal 23, Mérida', 659784520),
+    ('23458796P', 'Pérez', 'Gutiérrez', 'Jorge', 'Calle Santa Eulalia 25, Mérida', 659826321),
+    ('56721348K', 'Pérez', 'García', 'Fernando', 'Calle Severo Ochoa 14, Mérida', 698425175),
+    ('98632154J', 'García', 'Prieto', 'Alicia', 'Calle Colón 50, Mérida', 632514845),
+    ('28546312F', 'Montero', 'Torres', 'Silvia', 'Calle Trajano 47, Mérida', 686975412),
+    ('78412562P', 'Fernández', 'Silva', 'Rosa', 'Calle Mayor 12, Calamonte', 600500100),
+    ('12347852T', 'Martín', 'Silva', 'Borja', 'Avenida Reina Sofía 23, Mérida', 65698974)
+;
+
+SELECT * FROM CLIENTE;
+
+/*EJ 2*/
+INSERT IGNORE INTO CUENTA values
+	(1001, 'C1001', 1500.00, 'EUR'),
+    (1002, 'C1002', 2300.50 ,'USD'),
+    (1003, 'C1003', 1800.00, 'EUR'),
+    (1004, 'C1004', 3500.75, 'EUR'),
+    (1005, 'C1005', 125.00 ,'EUR'),
+    (1006, 'C1006' ,1900.00 ,'USD'),
+    (1007, 'C1007' ,2600.50, 'EUR'),
+    (1008, 'C1008', 125.00, 'EUR')
+;
+
+SELECT * FROM CUENTA;
 
 /*EJ 3*/
-SELECT AVG(precio_proveedor), AVG(precio_venta)
-FROM producto
-WHERE gama='Ornamentales';
-
-/*EJ 4*/
-SELECT *
-FROM producto 
-WHERE cantidad_en_stock=(
-	SELECT MIN(cantidad_en_stock)
-    FROM producto
+CREATE TABLE cuentas_dolares(
+	IDCLIENTE INT,
+	IDCUENTA VARCHAR(5),
+	SALDO DECIMAL (15,2)
 );
+
+INSERT INTO cuentas_dolares  
+	SELECT idcliente,idcuenta,saldo
+	FROM CUENTA;
+    
+SELECT * FROM cuentas_dolares;
+
+
+/*Ej 4*/
+SET AUTOCOMMIT=0;
+START TRANSACTION;
+UPDATE cuenta
+SET saldo=saldo-500
+WHERE idcliente=(
+	SELECT idcliente
+    FROM cliente
+    WHERE nombre='Vera' and apellido1='Martín'
+);
+
 
 /*EJ 5*/
-SELECT proveedor,COUNT(codigo_producto)
-FROM producto
-GROUP BY proveedor
-HAVING COUNT(codigo_producto)>10;
+ROLLBACK;
+SET AUTOCOMMIT=1;
+
 
 /*EJ 6*/
-SELECT CONCAT_WS(' ',em2.nombre,em2.apellido1,em2.apellido2) AS nombre_empleado, CONCAT_WS(' ',em1.nombre,em1.apellido1,em1.apellido2) AS nombre_jefe
-FROM empleado em1
-RIGHT JOIN empleado em2 ON em2.codigo_jefe=em1.codigo_empleado
-ORDER BY nombre_jefe;
+SET sql_safe_updates=0;
+UPDATE cuenta
+SET moneda='EUR', saldo=saldo*0.94
+WHERE moneda='USD';
+SET sql_safe_updates=1;
+SELECT * FROM CUENTA;
 
 /*EJ 7*/
-SELECT codigo_empleado, CONCAT_WS(' ',nombre,apellido1,apellido2) AS nombre_completo, codigo_oficina
-FROM empleado
-WHERE codigo_empleado NOT IN (
-	SELECT  distinct codigo_empleado_rep_ventas
-    FROM cliente
-)
-ORDER BY codigo_empleado;
+SET AUTOCOMMIT=0;
+START TRANSACTION ;
+SET sql_safe_updates=0;
+UPDATE cuenta
+SET saldo=saldo+100
+WHERE saldo>3000;
 
-/*EJ 8*/
-SELECT p.*
-FROM producto p
-JOIN (
-	SELECT gama, AVG(precio_venta) as media
-    FROM producto
-    GROUP BY gama
-) AS sub ON sub.gama=p.gama
-WHERE p.precio_venta>sub.media
-ORDER BY p.gama, p.nombre;
+savepoint pre50;
 
-/*EJ 9*/
-SELECT g.gama, COUNT(p.codigo_producto)
-FROM gama_producto g
-LEFT JOIN producto p ON g.gama=p.gama
-GROUP BY g.gama;
+UPDATE cuenta
+SET saldo=saldo+50
+WHERE saldo<200;
+SELECT * FROM CUENTA;
 
-/*EJ 10*/
-SELECT codigo_pedido, SUM(cantidad) as total_unidades
-FROM detalle_pedido
-GROUP BY codigo_pedido;
+
+/*Ej 8*/
+ROLLBACK TO pre50;
+SELECT * FROM CUENTA;
+SET sql_safe_updates=1;
+SET AUTOCOMMIT=1;
+
+/*Ej 9*/
+SELECT * FROM CLIENTE;
+DELETE ignore FROM cliente
+WHERE (nombre='Jorge' or nombre='Fernando') and apellido1='Pérez';
+
+SELECT * FROM CLIENTE;
+
+/*Ej 10*/
+CREATE OR REPLACE VIEW informacion_cliente AS
+	SELECT cl.dni, concat_WS(' ', cl.nombre,cl.apellido1,cl.apellido2) as nombre_completo, cu.saldo,cu.moneda
+    FROM cliente cl
+		JOIN cuenta cu
+			ON cu.idcliente=cl.idcliente;
+;
+
+SELECT * FROM informacion_cliente;
 
 /*EJ 11*/
-SELECT cl.nombre_cliente, pr.nombre, COUNT(*)
-FROM cliente cl
-JOIN pedido p ON p.codigo_cliente=cl.codigo_cliente
-JOIN detalle_pedido dp ON dp.codigo_pedido=p.codigo_pedido
-JOIN producto pr ON pr.codigo_producto=dp.codigo_producto
-GROUP BY cl.codigo_cliente, pr.codigo_producto
-HAVING COUNT(*)>1;
+DROP FUNCTION IF EXISTS calcular_capital;
+DELIMITER $
+CREATE FUNCTION calcular_capital()
+RETURNS DECIMAL(15,2)
+DETERMINISTIC
+BEGIN
+ DECLARE total int;
+ SET total=0;
+ 
+ SELECT SUM(saldo) into total
+ FROM cuenta;
+ 
+ return total;
+END $
+DELIMITER ;
+
+SELECT calcular_capital();
 
 /*EJ 12*/
-SELECT c.nombre_cliente
-FROM cliente c
-JOIN pedido p ON c.codigo_cliente=p.codigo_cliente
-GROUP BY c.codigo_cliente
-HAVING COUNT(p.codigo_pedido)=(
-	SELECT COUNT(p.codigo_pedido)
-    FROM cliente c
-	JOIN pedido p ON c.codigo_cliente=p.codigo_cliente
-    WHERE c.nombre_cliente='Flores Marivi'
-	GROUP BY c.codigo_cliente
-);
+DROP PROCEDURE IF EXISTS porcentaje_capital;
+DELIMITER $
+CREATE PROCEDURE porcentaje_capital(inout dnic VARCHAR(9),out salida VARCHAR(255))
+BEGIN
+ 
+	DECLARE pcliente decimal(6,2);
+    DECLARE percent decimal(6,2);
+    SELECT saldo into pcliente
+    FROM cuenta 
+    WHERE idcliente=(
+		SELECT idcliente
+        FROM cliente
+        WHERE dni='78456321L'
+    );
+    
+    SET percent= (pcliente*100)/calcular_capital();
+    
+		IF (percent<10.00) THEN 
+			SET salida= 'Cliente básico';
+		ELSEIF (percent<25.00) THEN
+			SET salida='Cliente medio';
+		ELSEIF (percent>25.00) THEN 
+			SET salida=  'Cliente VIP';
+		ELSE
+			SET SALIDA= 'Cliente no encontrado';
+		END IF;
+        
+        SET dnic=concat(percent,'%');
+            
+END $
+DELIMITER ;
+SET @dni='78456321L';
+CALL porcentaje_capital(@dni,@salida);
+SELECT @dni, @salida;
 
-/*EJ 13*/
-SELECT *
-FROM producto
-WHERE gama='Ornamentales' AND precio_venta-precio_proveedor=(
-	SELECT MAX(precio_venta-precio_proveedor)
-	FROM producto
-    WHERE gama='Ornamentales'
-	GROUP BY gama
-);
+
+/*Ej 13*/
+DROP TABLE IF EXISTS tabla_multiplicar;
+CREATE TABLE tabla_multiplicar(
+	ID int AUTO_INCREMENT PRIMARY KEY,
+    multiplicando int,
+    multiplicado int,
+    resultado int
+)AUTO_INCREMENT = 1;
+DROP FUNCTION IF EXISTS MULTIPLICAR;
+DELIMITER $
+CREATE FUNCTION MULTIPLICAR(num int)
+RETURNS boolean
+DETERMINISTIC
+BEGIN
+	DECLARE cont int;
+    SET cont=0;
+    
+	DELETE FROM tabla_multiplicar;
+    
+    
+    if (num <2 or num>10) THEN 
+		return false;
+	ELSE 
+	multi:REPEAT
+    
+	INSERT INTO tabla_multiplicar(multiplicando,multiplicado,resultado) values
+    (num,cont,num*cont);
+    SET cont =cont+1;
+    UNTIL cont>10
+    END REPEAT;
+	END IF;
+    return true;
+    
+
+END $
+DELIMITER ;
+
+SELECT MULTIPLICAR(5);
+SELECT * FROM tabla_multiplicar;
 
 /*EJ 14*/
-/*Esta consulta saca todos los datos de los clientes los cuales su ciudad no tiene ninguna oficina*/
-SELECT *
-FROM cliente
-WHERE ciudad NOT IN (
-	SELECT ciudad
-    FROM oficina
-);
+/*Las busquedas de esta manera no son eficiente ya que dni al no ser una clave primaria, no cuenta como un indice de busqueda para la base de datos, por lo que acaba buscando en todas las columnas para 
+encontrar la que es igual a la que pasamos por paramentros. 
+En este caso, si creamos un indice de los DNI por los 4 primeros digitos, la velocidad de busqueda aumentará ya que a partir de ahí, los dni de cada cliente son únicos y así aumentará la velocidad de busqueda */
+CREATE INDEX dniINX ON cliente(dni(54));
 
-/*EJ 15*/
-SELECT *
-FROM cliente c
-WHERE NOT EXISTS (
-	SELECT ciudad
-    FROM oficina o
-    WHERE c.ciudad=o.ciudad
-);
-
+/*Ej 15*/
+/*Esta busqueda tampoco sería eficiente ya que telefono no es una clave primaria, por lo tanto no cuenta como indice de busqueda. Para hacerla más eficiente, habría que crear un indice de busqueda
+de telefono por los 4 primeros digitos, ya que en este caso, desde ahí todos los numeros de telefono son unicos, por lo tanto se iría directamente al numero de telefono que se busca.*/
+CREATE INDEX tlfINX ON cliente(teléfono(4));
